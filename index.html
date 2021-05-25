@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang='en'>
+  <head>
+    <!-- Required meta tags -->
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+
+    <!-- Bootstrap CSS -->
+    <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css' rel='stylesheet' integrity='sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x' crossorigin='anonymous'>
+
+	<script src='https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js'></script>
+
+	<!-- Style Sheet -->
+	<link href='index.css' rel='stylesheet'>
+
+    <title>Conway's Game of Life</title>
+  </head>
+  <body>
+	<div class='container' id='page'>
+		<!-- Title -->
+		<div class='row'>
+			<div class='col-6' id='title-container'>
+				<h1 id='title'>Conway's <br> Game of Life</h1>
+			</div>
+			<div class='col' align='right'>
+				<div id='tribute-container' align='center'>
+					<a href='https://en.wikipedia.org/wiki/John_Horton_Conway' target='_blank'>
+						<img src='assets/conway.jpeg' alt='John Horton Conway' id='conway'>
+					</a>
+					<p>In Memory of John Horton Conway <br> 1937 - 2020</p>
+				</div>
+			</div>
+		</div>
+		<!-- Commands -->
+		<div class='row'>
+			<button type='button' class='col btn btn-primary ctrls' id='start-stop'>Start</button>
+			<button type='button' class='col btn btn-success ctrls' id='forward'>Forward</button>
+			<button type='button' class='col btn btn-success ctrls' id='backward'>Backward</button>
+			<button type='button' class='col btn btn-secondary ctrls' id='clear'>Clear</button>
+		</div>
+		<div class='row'>
+			<div class='col-md-auto'>
+				<label>Frames per second:</label>
+			</div>
+			<div class='col-sm-auto bounds'>
+				<p>1</p>
+			</div>
+			<div class='col'>
+				<input type='range' min='1' max='10' value='3' step='1' class='form-range' id='fps'>
+			</div>
+			<div class='col-sm-auto bounds'>
+				<p>10</p>
+			</div>
+		</div>
+		<!-- Board -->
+		<div class='row'>
+			<div class='container grid-container' id='board'></div>
+		</div>
+	</div>
+
+	<!-- Javascript -->
+	<script src='app.js'></script>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src='https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js' integrity='sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4' crossorigin='anonymous'></script>
+  </body>
+</html>
