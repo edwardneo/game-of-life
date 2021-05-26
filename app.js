@@ -75,13 +75,9 @@ $('#start-stop').bind('click', () => { // For Start/Stop button – Starts/Stops
 		return;
 	}
 
-	// Start or stop game loop
+	// If running, start game loop
 	if(running) {
-		gameLoop = setInterval(() => {
-			stepForward();
-		}, 1000/$('#fps').val());
-	} else {
-		clearInterval(gameLoop);
+		run();
 	}
 });
 
@@ -107,6 +103,15 @@ $('#clear').bind('click', () => { // For Clear button – Resets the grid and me
 		clearBoard();
 	}
 });
+
+function run() { // Steps the game forward at a certain speed
+	if(running) {
+		setTimeout(() => {
+			stepForward();
+			run(); // Recursion used to allow the frame rate to change with the FPS slider in real time
+		}, 1000/$('#fps').val());
+	}
+}
 
 function stepForward() { // Steps the game forward one tick
 	memory.push(grid); // Add current board to memory
