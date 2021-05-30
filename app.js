@@ -1,108 +1,90 @@
-const rows = 20; // Alter number of rows here
-const cols = 50; // Alter number of columns here
+let rows = undefined;
+let cols = undefined;
 
-let grid = Array(rows).fill().map(() => Array(cols).fill(false));
+let grid = undefined;
 let gameLoop = undefined;
-let memory = [];
+let memory = undefined;
 
 let running = false;
 
-$(document).ready(function() { // Set up board
-	// Add cells
-	const cellSize = $('#board').width()/cols;
-
-	for(i=0; i<rows; i++) {
-		// Create a row
-		let row = jQuery('<div/>', {
-			'class': 'row',
-		});
-
-		row.appendTo('#board');
-
-		for(j=0; j<cols; j++) {
-			// Create a cell
-			let cell = jQuery('<div/>', {
-				'class': 'col border border-dark cell dead',
-				'id': `cell-${i}-${j}`, // Unique ID
-				height: `${cellSize}px`,
-			});
-		
-			cell.appendTo(row);
-		}
-	}
-
-	// Bind toggle state on click
-	for (let cell of $('.cell')) {
-		cell.addEventListener('click', () => {
-			if(running) return; // Prevent toggling cells when running
-
-			// Toggle cell visually
-			if(cell.classList.contains('live')) {
-				cell.classList.remove('live');
-				cell.classList.add('dead');
-			} else if(cell.classList.contains('dead')) {
-				cell.classList.remove('dead');
-				cell.classList.add('live');
-			} else {
-				console.error('Cell lacks status class.');
-				return;
-			}
-
-			// Change state in backend grid
-			let coords = [cell.id.split('-')[1].toString(), cell.id.split('-')[2].toString()];
-			grid[coords[0]][coords[1]] = !grid[coords[0]][coords[1]];
-
-			// Reset memory
-			memory = [];
-		});
-	}
+$(document).ready(() => { // Set up board
+	setDimensions();
 }, false);
 
-$('#start-stop').bind('click', () => { // For Start/Stop button – Starts/Stops the game
-	running = !running; // Toggle running state
+$(window).resize(() => {
+	setDimensions();
+	displayGrid();
+})
 
-	// Toggle button visually
-	if($('#start-stop').hasClass('btn-primary')) {
-		$('#start-stop').html('Stop')
-			.removeClass('btn-primary')
-			.addClass('btn-danger');
-	} else if ($('#start-stop').hasClass('btn-danger')) {
-		$('#start-stop').html('Start')
-			.removeClass('btn-danger')
-			.addClass('btn-primary');
-	} else {
-		console.error('Button lacks color class.');
-		return;
-	}
+$('#start-stop').click(() => { // For Start/Stop button – Starts/Stops the game
+	running = !running; // Toggle running state
 
 	// If running, start game loop
 	if(running) {
+		start();
 		run();
+	} else {
+		stop();
 	}
 });
 
-$('#forward').bind('click', () => { // For Forward button – Steps the game forward one tick
-	if(!running) {
-		stepForward();
-	}
+$('#forward').click(() => { // For Forward button – Resets the dimensions if needed and steps the game forward one tick
+	redefineGrid();
+	stepForward();
 }); 
 
-$('#backward').bind('click', () => { // For Backward button – Steps the game backward one tick if possible
-	if(!running) {
-		if(memory.length != 0) {
-			grid = memory.pop();
-			displayGrid();
-		}
+$('#backward').click(() => { // For Backward button – Resets the dimensions if needed and steps the game backward one tick if possible
+	redefineGrid();
+	if(memory.length != 0) {
+		grid = memory.pop();
+		displayGrid();
 	}
 });
 
-$('#clear').bind('click', () => { // For Clear button – Resets the grid and memory and clears the board
-	if(!running) {
-		grid = Array(rows).fill().map(() => Array(cols).fill(false));
-		memory = [];
-		clearBoard();
+$('#clear').click(() => { // For Clear button – Resets the grid and memory and clears the board
+	if(running) {
+		running = false;
+		stop();
 	}
+
+	grid = Array(rows).fill().map(() => Array(cols).fill(false));
+	memory = [];
+	clearBoard();
 });
+
+$('#rows').change(() => { // For row range slider – Changes the front-end grid to the new number of rows
+	rows = $('#rows').val();
+	setDimensions();
+	displayGrid();
+});
+
+$('#cols').change(() => { // For column range slider – Changes the front-end grid to the new number of columns
+	cols = $('#cols').val();
+	setDimensions();
+	displayGrid();
+});
+
+function start() { // Changes the start/stop button to stop, disables the controls, and resets the back-end grid if needed
+	$('#start-stop').html('Stop')
+		.removeClass('btn-primary')
+		.addClass('btn-danger');
+
+	for(element of ['forward', 'backward', 'rows', 'cols']) {
+		$(`#${element}`).attr('disabled', true);
+	}
+
+	redefineGrid();
+}
+
+function stop() { // Changes the start/stop button to start and reenables the controls
+	$('#start-stop').html('Start')
+		.removeClass('btn-danger')
+		.addClass('btn-primary');
+
+	for(element of ['forward', 'backward', 'rows', 'cols']) {
+		$(`#${element}`).attr('disabled', false);
+	}
+}
 
 function run() { // Steps the game forward at a certain speed
 	if(running) {
@@ -139,19 +121,99 @@ function stepForward() { // Steps the game forward one tick
 		}
 	}
 
-	grid = newGrid; // Update the backend grid
+	grid = newGrid; // Update the back-end grid
 
 	displayChanges(life); // Displace the grid given what cells should be live
+}
+
+function setDimensions() { // Resets front-end grid and creates back-end grid if non-existent
+	// Set number of rows and columns
+	rows = parseInt($('#rows').val());
+	cols = parseInt($('#cols').val());
+
+	// Make back-end grid if nonexistent
+	if(!grid) {
+		grid = Array(rows).fill().map(() => Array(cols).fill(false));
+	}
+
+	// Clear cells
+	$('#board').empty();
+
+	// Add cells
+	const cellSize = $('#board').width()/cols;
+
+	for(i=0; i<rows; i++) {
+		// Create a row
+		let row = jQuery('<div/>', {
+			'class': 'row',
+		});
+
+		row.appendTo('#board');
+
+		for(j=0; j<cols; j++) {
+			// Create a cell
+			let cell = jQuery('<div/>', {
+				'class': 'col border border-dark cell dead',
+				'id': `cell-${i}-${j}`, // Unique ID
+				height: `${cellSize}px`,
+			});
+		
+			cell.appendTo(row);
+		}
+	}
+
+	// Bind toggle state on click
+	for (let cell of $('.cell')) {
+		cell.addEventListener('click', () => {
+			if(running) return; // Prevent toggling cells when running
+
+			// Toggle cell visually
+			if(cell.classList.contains('live')) {
+				cell.classList.remove('live')
+				cell.classList.add('dead');
+			} else if(cell.classList.contains('dead')) {
+				cell.classList.remove('dead')
+				cell.classList.add('live');
+			} else {
+				console.error('Cell lacks status class.');
+				return;
+			}
+
+			// Change state in back-end grid
+			let coords = [cell.id.split('-')[1].toString(), cell.id.split('-')[2].toString()];
+			grid[coords[0]][coords[1]] = !grid[coords[0]][coords[1]];
+
+			// Reset memory
+			memory = [];
+		});
+	}
+}
+
+function redefineGrid() { // Changes dimensions of back-end grid to front-end grid and resets memory
+	if(grid.length != rows || grid[0].length != cols) {
+		// Maps old grid to new grid and updates the old grid
+		let newGrid = Array(rows).fill().map(() => Array(cols).fill(false));
+		for(r=0; r<(rows<grid.length ? rows : grid.length); r++) {
+			for(c=0; c<(cols<grid[0].length ? cols : grid[0].length); c++) {
+				if(grid[r][c]) {
+					newGrid[r][c] = true;
+				}
+			}
+		}
+		grid = newGrid;
+
+		memory = []; // Reset memory
+	}
 }
 
 function displayGrid() { // Display the current grid
 	clearBoard();
 
-	for(r=0; r<rows; r++) {
-		for(c=0; c<cols; c++) {
+	for(r=0; r<(rows<grid.length ? rows : grid.length); r++) {
+		for(c=0; c<(cols<grid[0].length ? cols : grid[0].length); c++) {
 			if(grid[r][c]) {
-				$(`#cell-${r}-${c}`).removeClass('dead');
-				$(`#cell-${r}-${c}`).addClass('live');
+				$(`#cell-${r}-${c}`).removeClass('dead')
+					.addClass('live');
 			}
 		}
 	}
@@ -166,7 +228,7 @@ function displayChanges(life) { // Display the live cells specified
 	}
 }
 
-function clearBoard() { // Clear the board visually
+function clearBoard() { // Clear the front-end board
 	for(cell of $('.live')) {
 		cell.classList.remove('live');
 		cell.classList.add('dead');
